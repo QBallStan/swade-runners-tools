@@ -1,0 +1,480 @@
+/* ## TODO style dialog */
+.swadetools-2grid {
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 3px 10px; 
+}
+
+
+
+.swadetools-mod-add {
+display:flex;
+position:relative;
+align-items: center;
+
+}
+.swadetools-formpart > div {
+    margin-bottom: 5px;
+}
+.swadetools-formline {
+    display:flex;
+    position:relative;
+    align-items: center;
+    margin-bottom:10px;
+    }
+
+    input.swadetools-bullets-field {
+        width:80px;
+        margin-left:10px;
+    }
+.swadetools-mod-add label,.swadetools-mod-add input {
+    flex:1
+}
+
+.swadetools-mod-add input {
+    margin-left:10px;
+}
+
+.swadetools-formpart {
+    margin:10px 0
+}
+
+.swadetools-raise {
+    display: flex;
+    align-items: center;
+}
+.swadetools-raise label {
+    font-size: 16px;
+    display: flex;
+}
+
+.swadetools-raise input {
+    margin: 0 5px 0 0;
+    vertical-align: middle;
+}
+
+.swadetools-raise select {
+    flex:1;
+           
+}
+
+.item-image, .item.weapon .item-img,.item-show, .item.weapon .damage,.powers-list h4.item-name, .item-list .item.weapon h4, ol.skill-list li.item.skill img.skill-icon {
+    cursor: pointer;
+}
+
+.swadetools-relative {
+    position: relative;
+    z-index:1;
+}
+
+.swadetools-chatadd-status {
+margin-top:3px
+}
+
+.swadetools-unshake-button {
+    background-image: url(../icons/benny.png);
+    background-repeat: no-repeat;
+    background-position: 5px center;
+    cursor:pointer;
+    padding-left:30px;
+    text-align: left;
+}
+button.swadetools-rollbutton i {
+    margin-right:0;
+}
+
+button.swadetools-freereroll {
+    position: absolute;
+    right: calc(1.5em + 6px);
+    bottom: 0;
+}
+
+.swadetools-rollbuttonwrap {
+    bottom: 3px;
+    position: absolute;
+    display: flex;
+    width: 100%;
+    padding-left: 3px;
+}
+button.swadetools-rollbutton {
+    padding-top: 2px;
+    width: 20px;
+    height: 20px;
+    
+    border: 1px solid #737171;
+    border-radius: 3px;
+    cursor: pointer;
+    
+    line-height: 1;
+    padding: 2px;
+    font-size: 13px;
+    color:#50442a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+button.swadetools-bennyrerroll {
+   
+    position:absolute;
+    right: 3px;
+    bottom:0;
+    
+    background: url(../icons/benny.png) no-repeat center center #f3f3e7;
+    background-size: 90%;
+   
+}
+
+
+
+.swadetools-criticalfailure {
+    background: #b10505;
+    color: white;
+    text-align: center;
+    padding: 5px;
+   
+    margin-top: 5px;
+    border-radius: 3px;
+
+}
+
+.swadetools-targetwrap {
+    border: 1px solid #737171;
+    border-radius: 3px;
+    display: flex;
+   flex-wrap:wrap;
+    margin-bottom: 2px;
+    align-items: center;
+    background: #f3f3e7;
+}
+.swadetools-target-title {
+    color: #5a5959;
+    margin: 3px 0;
+    /* text-align: center; */
+    font-size: 12px;
+}
+.swadetools-targetname {
+font-weight:bold;
+margin-left:5px;
+display: flex;
+align-items: center;
+flex-wrap: wrap;
+}
+
+.swadetools-rolldamage-style, .swadetools-chat-dmg-button {
+    display: flex;
+    
+    align-items: center;
+    padding: 3px 5px;
+}
+
+
+
+.swadetools-term-hit, .swadetools-rof-hit {  /* ///miss hit raise &&& none shaken wounds  */
+color:green
+}
+
+.swadetools-term-raise,.swadetools-rof-raise {  /* ///miss hit raise &&& none shaken wounds  */
+    color:purple
+    }
+
+    .swadetools-term-miss, .swadetools-term-none,.swadetools-chat-dmg-button[disabled],.swadetools-chat-soak-button[disabled], .swadetools-bar, .swadetools-rof-disable a.swadetools-rolldamage-style {  /* ///miss hit raise &&& none shaken wounds  */
+        color:gray;
+        text-shadow: none;
+        cursor:auto;
+        }
+
+        .swadetools-term-rof {
+color:black;
+padding: 0 5px;
+        }
+
+        .swadetools-term-miss, .swadetools-term-none{
+            padding: 3px 5px;
+        }
+       
+
+        .swadetools-term-shaken {
+            color:orange;
+        }
+        .swadetools-term-wounds {
+            color:#b10505
+        }
+
+
+        .swadetools-vulnerable-icon {
+            width: 15px;
+            height:15px;
+            background: url(../icons/vulnerable.png) no-repeat center center;
+            background-size:100%;
+            margin:0 2px;
+            display: inline-block;
+        }
+
+
+        .swadetools-simplebutton {
+            margin-top:5px
+        }
+
+
+        .vertical-buttons .dialog-buttons button.dialog-button {
+            cursor:pointer;
+            margin-bottom:2px
+            }
+
+
+            .swadetools-form-hint {
+              
+    font-size: 12px;
+    color: grey;
+            }
+
+           
+            .swadetools-hint {
+                border-bottom:1px dotted transparent;
+                font-size: 12px;
+            }
+            .swadetools-hint:hover {
+                border-bottom:1px dotted grey;
+            }
+
+            .swadetools-raise-power {
+                margin-top:10px
+            }
+
+            .swadetools-term-rof .swadetools-rolldamage-style {width:auto}
+
+.swadetools-term-rof .swadetools-target-name {display:inline-block}
+
+.swadetools-chat-soak-button {
+    
+    padding-left:20px;
+    background-size: contain;
+    color:#c59f36;
+    width:35px;
+}
+
+
+.swadetools-damage-with-soak .swadetools-chat-dmg-button{
+width: calc(100% - 47px);
+}
+
+
+.swadetools-targetwrap.swadetools-damage-with-soak { 
+    border:none;
+    background:none;
+    border-radius:none;
+    }
+    
+    .swadetools-targetwrap.swadetools-damage-with-soak a.swadetools-chat-dmg-button, .swadetools-targetwrap.swadetools-damage-with-soak a.swadetools-chat-soak-button {
+    border: 1px solid #737171;
+        border-radius: 3px;
+        background-color: #f3f3e7;
+    }
+    
+    .swadetools-targetwrap.swadetools-damage-with-soak .swadetools-chat-soak-button {
+    position:relative;
+    margin-left:5px;
+    padding:3px 20px 3px 
+    }
+    
+    .swadetools-targetwrap.swadetools-damage-with-soak .swadetools-chat-soak-button:before {
+    position:absolute;
+    content:'';
+    display:block;
+    background-image: url(../icons/benny.png);
+    background-repeat: no-repeat;
+    background-position: 0 center;
+    width: 17px;
+    height: 17px;
+    left: 2px;
+    background-size: 100%;
+    }
+
+    .swadetools-targetwrap.swadetools-damage-with-soak .swadetools-chat-soak-button[disabled]:before{
+        filter:grayscale(1)
+    }
+
+    .swadetools-vertical.dialog .dialog-buttons {
+        display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 5px;
+    }
+    .swadetools-vertical.dialog .dialog-buttons > * {
+        flex:none;
+    }
+
+    .swadetools-vertical.dialog .dialog-buttons button {
+        margin:0
+    }
+
+    
+    
+
+    .swadetools-pseudocard .card-content {
+        border-bottom: 2px groove #fff;
+        }
+
+
+        .swadetools-rof-wrap {
+            display: flex;
+            /* border-bottom: 2px groove #fff; */
+            padding: 5px 5px 2px 0;
+            align-items: center;
+            background-color: white;
+            border: 1px solid #737171;
+            margin: 3px 0;
+            border-radius: 3px;
+        }
+        
+        .swadetools-rof-total {
+            font-size: 20px;
+    font-weight: bold;
+    padding: 0 5px;
+    min-width:30px;
+    text-align: center;
+        }
+
+        .swadetools-rof-disable{
+            background:rgba(255,255,255,0.3)
+        }
+
+        .swadetools-rof-disable .swadetools-rof-total {
+            color:grey;
+        }
+
+        
+        .swadetools-rof-results {
+            flex:1
+        }
+        .swadetools-damage-actions {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 3px 10px;
+        }
+
+        .swadetools-damage-actions.swadetools-mid-title {
+            grid-column: span 2;
+            display: block;
+            margin-top:10px;
+        }
+
+        .swadetools-damage-actions label {
+            text-align: right;
+        }
+
+        .swadetools-damage-actions.swadetools-mod-add label {
+           flex:none;
+           margin-right:10px;
+        }
+        .swadetools-damage-actions select {
+            
+            flex:1;
+           
+        }
+
+        .swadetools-situational-info {
+            width:100%;
+            color: #5a5959;
+    font-size: 12px;
+    padding:3px;
+        }
+
+        .swadetools-situational-info ul {
+            padding-top: 0;
+    padding-bottom: 0;
+    list-style-type: disc;
+   
+    margin: 0;
+        }
+
+        .swadetools-situational-link {
+            margin-left:auto;
+            color:black
+        }
+
+        .swadetools-term-hit .swadetools-situational-link, .swadetools-term-raise .swadetools-situational-link{
+            margin-right:3px
+        }
+
+
+        .swadetools-donation-link img {
+            border: none;
+            height: 12px;
+            margin-bottom: -1px;
+        }
+
+        .swadetools-gmmodtotalnumber {
+            position: absolute;
+            bottom: 0;
+            background: #aaaaaa;
+            width: 100%;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .swadetools-gmmodtotal {
+            position:relative;
+        }
+
+        .chat-portrait-text-size-name-swade { /* /// minor fix for chat portrait css bug */
+            display:block !important
+            }
+
+            .swade-tools-template-buttons
+             {
+                display:flex;
+                align-items: center;
+            }
+
+.swadetools-number-controls-wrapper button {
+    height:50%;
+    line-height: 11px;
+    padding: 1px 3px;
+    margin: 0;
+    display: block;
+    transition:0.5s ease;
+     background:#972824;
+color:white;
+}
+.swadetools-number-controls-wrapper button:focus,
+.swadetools-number-controls-wrapper button:hover {
+     box-shadow:none;
+}
+.swadetools-number-controls-wrapper button:hover {
+   
+   background:#521412;
+    
+}
+
+.swadetools-dialog-item .swade-tools-template-buttons {
+margin-top:5px
+}
+
+.swadetools-dialog-item .swade-tools-template-buttons button {
+    width: auto;
+    line-height: initial;
+    padding: 2px;
+    margin-left: 2px;
+    /* display: flex; */
+    /* align-items: center; */
+    /* justify-content: center; */
+    background: none;
+    border: none;
+}
+
+li.chat-message footer.roll-interaction,
+.swade-roll .dice-flavor { /* /// HIDE SYSTEM BENNY BUTTONS AND words "Rool" .swadetools-rollbuttonwrap"Roll Result" */
+    display:none
+    }
+
+
+    .swade-official .gear-card.swadetools-noshow .card-content,
+    .swade-official .item.swadetools-noshow .content {
+        display: none !important;
+    }
+
+
+    .swade-official .primary .attribute-list {flex-wrap: nowrap;} /* /// fix css wrap attributes */
