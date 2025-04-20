@@ -834,33 +834,6 @@ export default class CharRoll extends BasicRoll{
         this.flavor += `<div>${gb.trans('Dmg','SWADE')}: ${damage} ${raisetext} ${extraflavor}</div>`;
     
         this.baseModifiers(true);
-
-// ✅ Apply conditional melee-only bonus
-if (this.item?.type === 'weapon' && this.item?.system?.rangeType === 0) {
-    const meleeBonus = this.actor?.flags?.['swade-tools']?.meleeDamage;
-  
-    if (Array.isArray(meleeBonus)) {
-      // Supports array format (structured object)
-      meleeBonus.forEach(mod => {
-        this.addModifier(mod.value, `${mod.label} (Melee Bonus)`);
-      });
-    } else if (typeof meleeBonus === 'number') {
-        let sourceName = "Melee Bonus";
-      
-        // Look through the actor's items to find which one set this flag
-        const sourceItem = this.actor.items.find(item => {
-          return item.effects.some(eff =>
-            eff.changes.some(change => change.key === 'flags.swade-tools.meleeDamage')
-          );
-        });
-      
-        if (sourceItem?.name) {
-          sourceName = sourceItem.name;
-        }
-      
-        this.addModifier(meleeBonus, sourceName);
-      }     
-  }
     
         await this.buildDamageRoll(this.changeStr(damage), this.mod, this.dmgraise, raisedie);
     }

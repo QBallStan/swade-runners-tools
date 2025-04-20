@@ -134,11 +134,29 @@ export default class ItemRoll extends CharRoll{
 
         // ✅ NEW: Melee-only conditional damage modifiers
         const isMelee = this.item?.type === 'weapon' && this.item.system?.rangeType === 0;
-        if (isMelee && this.actor?.flags?.['swade-tools']?.meleeDamage?.length > 0) {
-        this.actor.flags['swade-tools'].meleeDamage.forEach(el => {
-        this.addModifier(el.value, `${el.label} (Melee Bonus)`);
-            });
-        }
+        if (isMelee) {
+            const meleeBonus = this.actor?.flags?.['swade-tools']?.meleeDamage;
+          
+            if (Array.isArray(meleeBonus)) {
+              meleeBonus.forEach(mod => {
+                this.addModifier(mod.value, `${mod.label} (Melee Bonus)`);
+              });
+            } else if (typeof meleeBonus === 'number' || typeof meleeBonus === 'string') {
+                let sourceName = "Melee Bonus";
+              
+                const sourceItem = this.actor.items.find(item =>
+                  item.effects.some(eff =>
+                    eff.changes.some(change => change.key === 'flags.swade-tools.meleeDamage')
+                  )
+                );
+              
+                if (sourceItem?.name) {
+                  sourceName = sourceItem.name;
+                }
+              
+                this.addModifier(meleeBonus, sourceName);
+              }
+          }
         
     }
     ///
