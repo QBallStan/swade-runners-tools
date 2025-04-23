@@ -22,6 +22,7 @@ export default class ItemDialog {
         this.dontDisplay=false;
     }
 
+    
 
     saveSkill(newSkill){
         this.item.update({'system.actions.trait':newSkill});
@@ -145,11 +146,21 @@ export default class ItemDialog {
         if (item.type=='weapon'){
         content+=`<div><strong>${gb.trans('Dmg','SWADE')}</strong>: ${weaponinfo.damage}${patxt}</div>
         <div><strong>${gb.trans('Mag','SWADE')}</strong>: ${weaponinfo.currentShots}/${weaponinfo.shots}</div>
-        
-        
         <div><strong>${gb.trans('Range._name','SWADE')}</strong>: ${weaponinfo.range}</div>
+        ${(() => {
+            const target = Array.from(game.user.targets)[0];
+            const rangeResult = calculateRangePenaltyForDialog(item, target);
+            if (!rangeResult) return `<div><strong>Range Penalty:</strong> No target</div>`;
+            if (rangeResult.value === -999) {
+              return `<div><strong>Range Penalty:</strong> Target too far!</div>`;
+            }
+            return `<div><strong>Range Penalty (${rangeResult.label}):</strong> ${rangeResult.value}</div>`;
+          })()}
+          
         <div><strong>${gb.trans('RoF','SWADE')}</strong>: ${weaponinfo.rof}</div>`
-        }  else if (item.type=='power'){
+        }  
+        
+        else if (item.type=='power'){
 
             if (showDamage){
              
@@ -804,4 +815,41 @@ export default class ItemDialog {
             
         
     }
+    
 }
+
+function calculateRangePenaltyForDialog(item, target) {
+    const origin = canvas.tokens.controlled[0]; // using controlled token instead of item.actor.token
+    if (!target || !origin || !item?.system?.range?.includes('/')) return null;
+  
+    const ranges = item.system.range.split('/').map(r => parseInt(r.trim(), 10));
+    if (ranges.length !== 3) return null;
+  
+    try {
+      const result = canvas.grid.measurePath([origin, target]);
+      const distance = result.distance;
+  
+      let label = "Short";
+      let penalty = 0;
+  
+      if (distance > ranges[0]) {
+        label = "Medium";
+        penalty = -2;
+      }
+      if (distance > ranges[1]) {
+        label = "Long";
+        penalty = -4;
+      }
+      if (distance > ranges[2] * 4) {
+        return { label: "Too Far", value: -999, distance };
+      }
+  
+      return { label, value: penalty, distance };
+    } catch (e) {
+      console.warn("Range penalty calculation failed:", e);
+      return null;
+    }
+  }
+  
+
+  window.calculateRangePenaltyForDialog = calculateRangePenaltyForDialog;  

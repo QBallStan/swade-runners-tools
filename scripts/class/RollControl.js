@@ -39,9 +39,7 @@ export default class RollControl {
 
         
      
-    }
-
-   
+    }  
 
     addEditButton(){
         if (game.user.isGM){
@@ -136,8 +134,8 @@ export default class RollControl {
                                         await this.chat.update(update);
                     }
 
-                });
-            }
+                });             
+                }
             }
       //  }
     }
@@ -278,6 +276,41 @@ export default class RollControl {
         
         if (!this.isCritical()){
            // this.addBennyButton();
+           if (this.rolltype === 'damage') {
+            const item = this.getItemOwner().items.get(this.chat.flags["swade-tools"].itemroll);
+            const targets = Array.from(game.user.targets);
+        
+            if (targets.length > 0) {
+                const target = targets[0]; // Show toughness for the first target only
+                let totalToughness, armor;
+        
+                if (target.actor.type === 'vehicle') {
+                    totalToughness = gb.realInt(target.actor.system.toughness.total);
+                    armor = gb.realInt(target.actor.system.toughness.armor);
+                } else {
+                    totalToughness = gb.realInt(target.actor.system.stats.toughness.value);
+                    armor = gb.realInt(gb.getArmorArea(target.actor));
+                }
+        
+                this.html.find('.flavor-text').append(`<div style="margin-top: 2px; font-size: 0.9em; color: #222;">
+                    Toughness: ${totalToughness} (Armor: ${armor})
+                </div>`);
+                const item = this.getItemOwner().items.get(this.chat.flags["swade-tools"]?.itemroll);
+                const ap = this.getResolvedApValue();
+
+
+                const adjustedArmor = Math.max(armor - ap, 0);
+                const finalToughness = totalToughness - armor + adjustedArmor;
+
+                this.html.find('.flavor-text').append(`
+                <div class="swadetools-final-ap-line" style="margin-top: 2px; font-size: 0.9em; color: #333;">
+                    Final Toughness: ${finalToughness} (Armor: ${adjustedArmor})
+                </div>
+                `);
+                  
+            }
+        }
+        
             this.findTargets();
         } else {
 
@@ -769,6 +802,29 @@ export default class RollControl {
        
     }
 
+    getResolvedApValue() {
+        const item = this.getItemOwner().items.get(this.chat.flags["swade-tools"]?.itemroll);
+        if (!item) return 0;
+      
+        let ap = gb.realInt(item.system.ap || 0);
+      
+        if (this.chat.flags["swade-tools"]?.useaction) {
+          const action = this.chat.flags["swade-tools"].useaction;
+          const actionData = item.system.actions?.additional?.[action];
+      
+          if (actionData) {
+            // Check if action overrides AP
+            if (actionData.apOverride) {
+              ap = gb.realInt(actionData.ap);
+            } else {
+              ap += gb.realInt(actionData.ap || 0);
+            }
+          }
+        }
+      
+        return ap;
+      }  
+       
 
     failedPower(item){
        // gb.log(item);
@@ -1275,6 +1331,18 @@ export default class RollControl {
         let total=this.roll.total+this.gmmod;
         let targetInfo='';
        // let unstoppable=0;
+        let totalToughness;
+        let armor;
+       
+        if (target.actor.type === 'vehicle') {
+            totalToughness = gb.realInt(target.actor.system.toughness.total);
+            armor = gb.realInt(target.actor.system.toughness.armor);
+        } else {
+            totalToughness = gb.realInt(target.actor.system.stats.toughness.value);
+            armor = gb.realInt(gb.getArmorArea(target.actor));
+        }
+       
+
         
         
 

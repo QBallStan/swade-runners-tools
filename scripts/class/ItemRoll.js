@@ -180,34 +180,60 @@ export default class ItemRoll extends CharRoll{
         }
     }
 
-
+    
 
 
     async rollBaseSkill(rof=1){
-
         let rofstr='';
         if (rof>1){
             rofstr=rof;
         }
+      
         this.defineAction('formula'+rofstr);
-        
-        
-       
         this.addSkillMod();
-
-        let attr=gb.findAttr(this.data.trait)
-       // gb.log(this.data.skill,attr);
-        if (attr){
-            await this.rollAtt(attr,rof);
-        } else {
-            await this.rollSkill(this.data.trait,rof);
+      
+        const modifiers = [];
+      
+        // ✅ Add range penalty modifier
+        const item = this.item;
+        const target = this.target;
+      
+        if (item?.system?.range?.includes('/') && target?.actor) {
+          const rangeString = item.system.range.split('/');
+          const ranges = rangeString.map(r => parseInt(r.trim(), 10));
+          const origin = item.actor?.token;
+          const targetToken = target.token ?? target;
+      
+          const distance = canvas.grid.measureDistance(origin, targetToken);
+      
+          let label = "Short";
+          let penalty = 0;
+      
+          if (distance > ranges[0]) {
+            label = "Medium";
+            penalty = -2;
+          }
+          if (distance > ranges[1]) {
+            label = "Long";
+            penalty = -4;
+          }
+          if (distance > ranges[2] * 4) {
+            label = "Too Far";
+            penalty = -999;
+          }
+      
+          if (penalty !== 0 && penalty !== -999) {
+            modifiers.push({
+              label: `Range Penalty (${label})`,
+              value: penalty
+            });
+          }
         }
-        
-       
-        
-        
-        
-    }
+      
+        // ✅ Perform the actual skill roll with visible modifiers
+        await this.rollSkill(this.data.trait, rof, { modifiers });
+      }
+      
 
     getApInfo(action=false){
         let extrainfo='';
