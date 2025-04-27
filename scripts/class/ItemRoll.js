@@ -158,6 +158,44 @@ export default class ItemRoll extends CharRoll{
               }
           }
         
+          // ✅ Shotgun Spread/Slug Rules
+          const isShotgun = this.item?.system?.additionalStats?.isShotgun?.value;
+          const usingSlug = this.item?.system?.additionalStats?.usingSlugAmmo?.value;
+          
+          if (isShotgun) {
+            const origin = this.item.actor?.token ?? canvas.tokens.controlled[0];
+            const targets = Array.from(game.user.targets);
+          
+            if (origin && targets.length > 0) {
+              const targetToken = targets[0];
+              const path = [origin.center, targetToken.center];
+              const measure = canvas.grid.measurePath(path);
+              const distance = measure.distance;
+          
+              const rangeString = this.item.system.range.split('/');
+              const ranges = rangeString.map(r => parseInt(r.trim(), 10));
+          
+              let rangeBand = "short";
+              if (distance > ranges[0]) rangeBand = "medium";
+              if (distance > ranges[1]) rangeBand = "long";
+              if (distance > ranges[2]) rangeBand = "extreme";
+          
+              if (usingSlug) {
+                this.addModifier(2, "Slug Ammo Bonus");
+              } else {
+                if (rangeBand === "short") {
+                  this.addModifier(2, "Shotgun Spread (Short Range)");
+                } else if (rangeBand === "medium") {
+                  // No modifier at medium range
+                } else if (rangeBand === "long") {
+                  this.addModifier(-2, "Shotgun Spread (Long Range)");
+                } else if (rangeBand === "extreme") {
+                  ui.notifications.warn("❌ Shotshells cannot fire at Extreme Range!");
+                }
+              }
+            }
+          }
+          
     }
     ///
 

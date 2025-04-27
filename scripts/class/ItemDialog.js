@@ -143,22 +143,23 @@ export default class ItemDialog {
         content+=`<div class="swadetools-2grid">`
 
 
-        if (item.type=='weapon'){
-        content+=`<div><strong>${gb.trans('Dmg','SWADE')}</strong>: ${weaponinfo.damage}${patxt}</div>
-        <div><strong>${gb.trans('Mag','SWADE')}</strong>: ${weaponinfo.currentShots}/${weaponinfo.shots}</div>
-        <div><strong>${gb.trans('Range._name','SWADE')}</strong>: ${weaponinfo.range}</div>
-        ${(() => {
-            const target = Array.from(game.user.targets)[0];
-            const rangeResult = calculateRangePenaltyForDialog(item, target);
-            if (!rangeResult) return `<div><strong>Range Penalty:</strong> No target</div>`;
-            if (rangeResult.value === -999) {
-              return `<div><strong>Range Penalty:</strong> Target too far!</div>`;
-            }
-            return `<div><strong>Range Penalty (${rangeResult.label}):</strong> ${rangeResult.value}</div>`;
-          })()}
-          
-        <div><strong>${gb.trans('RoF','SWADE')}</strong>: ${weaponinfo.rof}</div>`
-        }  
+        if (item.type == 'weapon') {
+            content += `<div><strong>${gb.trans('Dmg','SWADE')}</strong>: ${weaponinfo.damage}${patxt}</div>
+            <div><strong>${gb.trans('Mag','SWADE')}</strong>: ${weaponinfo.currentShots}/${weaponinfo.shots}</div>
+            <div><strong>${gb.trans('Range._name','SWADE')}</strong>: ${weaponinfo.range}</div>
+            ${(() => {
+                const target = Array.from(game.user.targets)[0];
+                const rangeResult = calculateRangePenaltyForDialog(item, target);
+                if (!rangeResult) return `<div><strong>Range Penalty:</strong> No target</div>`;
+                if (rangeResult.value === -999) {
+                  return `<div><strong>Range Penalty:</strong> Target too far!</div>`;
+                }
+                return `<div><strong>Range Penalty (${rangeResult.label}):</strong> ${rangeResult.value}</div>`;
+              })()}
+            <div><strong>${gb.trans('RoF','SWADE')}</strong>: ${weaponinfo.rof}</div>
+            <div><strong>Ammo</strong>: ${weaponinfo.ammo || "none"}</div>`;
+          }
+            
         
         else if (item.type=='power'){
 
@@ -519,6 +520,42 @@ export default class ItemDialog {
             }
         } */
     }
+
+    if (weaponinfo.shots > 0 && weaponinfo.reloadType === "magazine") { // only for magazine weapons
+        buttons.ejectmag = {
+            label: `<i class="fas fa-eject"></i> Eject Mag`,
+            callback: async (html) => {
+              const loadedAmmo = this.item.flags?.swade?.loadedAmmo;
+              
+              if (!loadedAmmo) {
+                ui.notifications.warn("No magazine loaded to eject!");
+                return;
+              }
+        
+              const actor = this.actor;
+              if (!actor) {
+                ui.notifications.warn("No actor found for this weapon.");
+                return;
+              }
+        
+              // ✅ Use Foundry-safe duplicate method
+              const magData = foundry.utils.duplicate(loadedAmmo);
+              
+              magData.system.quantity = 1;
+              magData.system.equippable = false;
+        
+              await actor.createEmbeddedDocuments("Item", [magData]);
+        
+              await this.item.update({
+                "flags.swade.loadedAmmo": null,
+                "system.currentShots": 0
+              });
+        
+              ui.notifications.info(`Magazine (${magData.system.charges?.value ?? 'Unknown'} rounds) ejected to inventory.`);
+            }
+        };                               
+      }
+      
 
         if (skillName==gb.setting('fightingSkill')){
            /*  buttons.wildattack={

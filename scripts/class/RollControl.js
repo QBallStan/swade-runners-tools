@@ -304,7 +304,7 @@ export default class RollControl {
 
                 this.html.find('.flavor-text').append(`
                 <div class="swadetools-final-ap-line" style="margin-top: 2px; font-size: 0.9em; color: #333;">
-                    Final Toughness: ${finalToughness} (Armor: ${adjustedArmor})
+                    Toughness - AP: ${finalToughness} (Armor: ${adjustedArmor})
                 </div>
                 `);
                   
@@ -884,7 +884,8 @@ export default class RollControl {
     }
 
     attackTarget(target,total,rofnumb){
-        
+        console.log("🧪 attackTarget() called for", target.name);
+
         
         total+=this.gmmod;
         
@@ -1063,29 +1064,45 @@ export default class RollControl {
                 }
             }
 
+            console.log("🛡️ Cover flag:", target.actor?.flags?.["swade-tools"]?.coverLevel);
 
-            if (gb.setting('autoCover')){
-                /// cover
-                let coveritems=target.actor.items.filter(el=>el.system.equipStatus==3 && el.system.cover<0);
-               // let finalcover = Math.min(...coveritems.map(item => item.cover));
-                let finalcover=0;
-                let itemname='';
-    
-                /// find lowest cover
-                coveritems.map(item=>{
-                    if (item.system.cover<finalcover){
-                        finalcover=item.system.cover;
-                        itemname=item.name;
-                    }
-                })
-    
-                if (finalcover<0){
-                    let coverBonus=Math.abs(finalcover);
-                    targetNumber+=coverBonus;
-                    targetInfo+=`<li>${itemname}: -${coverBonus}`
+            if (gb.setting('autoCover')) {
+                let finalPenalty = 0;
+                let sourceLabel = '';
+              
+                // 1. Item-based cover (existing logic)
+                const coverItems = target.actor.items.filter(el => el.system.equipStatus === 3 && el.system.cover < 0);
+                for (const item of coverItems) {
+                  const itemPenalty = item.system.cover;
+                  if (itemPenalty < finalPenalty) {
+                    finalPenalty = itemPenalty;
+                    sourceLabel = item.name;
+                  }
                 }
-    
+              
+                // 2. Token flag-based cover
+                const level = target.document?.flags?.["swade-tools"]?.coverLevel;
+                const penaltyMap = {
+                  "light": -2,
+                  "medium": -4,
+                  "heavy": -6,
+                  "near-total": -8
+                };
+                const flagPenalty = penaltyMap[level] || 0;
+              
+                if (flagPenalty < finalPenalty) {
+                  finalPenalty = flagPenalty;
+                  sourceLabel = "Cover";
                 }
+              
+                // 3. Apply highest penalty
+                if (finalPenalty < 0) {
+                  const penaltyAbs = Math.abs(finalPenalty);
+                  targetNumber += penaltyAbs;
+                  targetInfo += `<li>${sourceLabel}: -${penaltyAbs}</li>`;
+                }
+              }
+              
             
         }
 

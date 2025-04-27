@@ -45,6 +45,38 @@ ui.notifications.warn =>yellow
 
 var foundryIsReady=false;
 
+Hooks.on("init", () => {
+    console.log("✅ Swade Tools: Registering custom cover status effects");
+  
+    CONFIG.statusEffects.push(
+      {
+        id: "cover-none",
+        name: "No Cover",
+        img: "modules/swade-tools/icons/no-cover.svg"
+      },
+      {
+        id: "cover-light",
+        name: "Light Cover",
+        img: "modules/swade-tools/icons/light-cover.svg"
+      },
+      {
+        id: "cover-medium",
+        name: "Medium Cover",
+        img: "modules/swade-tools/icons/medium-cover.svg"
+      },
+      {
+        id: "cover-heavy",
+        name: "Heavy Cover",
+        img: "modules/swade-tools/icons/heavy-cover.svg"
+      },
+      {
+        id: "cover-near-total",
+        name: "Near Total Cover",
+        img: "modules/swade-tools/icons/near-total-cover.svg"
+      }
+    );
+  });
+  
 
 Hooks.on('ready',async()=>{
 
@@ -440,8 +472,84 @@ Hooks.on('renderTokenActionHUD',()=>{
     tah.rebindAll();
 })
 
-
-
+Hooks.on("renderTokenHUD", (hud, html, tokenData) => {
+    const token = canvas.tokens.get(tokenData._id);
+  
+    // 🛡️ Add Cover Options button to HUD
+    const coverButton = $(`
+      <div class="control-icon swadetools-cover-main" title="Cover Options">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+    `);
+    html.find(".col.right").append(coverButton);
+  
+    // 📦 Build Cover Menu
+    const coverMenu = $(`
+      <div class="swadetools-cover-menu">
+        <div class="cover-icon" data-cover="none" title="Remove Cover">
+          <img src="modules/swade-tools/icons/no-cover.svg" />
+        </div>
+        <div class="cover-icon" data-cover="light" title="Light Cover (-2)">
+          <img src="modules/swade-tools/icons/light-cover.svg" />
+        </div>
+        <div class="cover-icon" data-cover="medium" title="Medium Cover (-4)">
+          <img src="modules/swade-tools/icons/medium-cover.svg" />
+        </div>
+        <div class="cover-icon" data-cover="heavy" title="Heavy Cover (-6)">
+          <img src="modules/swade-tools/icons/heavy-cover.svg" />
+        </div>
+        <div class="cover-icon" data-cover="near-total" title="Near Total Cover (-8)">
+          <img src="modules/swade-tools/icons/near-total-cover.svg" />
+        </div>
+      </div>
+    `);
+  
+    html.find(".col.right").append(coverMenu);
+    coverMenu.removeClass("active");
+  
+    // 👆 Toggle cover menu
+    coverButton.on("click", () => {
+      coverMenu.toggleClass("active");
+    });
+  
+    // 🖱️ Handle cover icon click
+    coverMenu.on("click", ".cover-icon", async function () {
+        const level = $(this).data("cover");
+      
+        const iconMap = {
+          "none": "cover-none",
+          "light": "cover-light",
+          "medium": "cover-medium",
+          "heavy": "cover-heavy",
+          "near-total": "cover-near-total"
+        };
+      
+        const iconId = iconMap[level];
+        const allIconIds = Object.values(iconMap);
+      
+        try {
+          for (const id of allIconIds) {
+            await token.actor.toggleStatusEffect(id, { active: false });
+          }
+      
+          if (level === "none") {
+            await token.document.unsetFlag("swade-tools", "coverLevel");
+          } else {
+            await token.document.setFlag("swade-tools", "coverLevel", level);
+            await token.actor.toggleStatusEffect(iconId, { active: true });
+          }
+      
+          coverMenu.removeClass("active");
+        } catch (err) {
+          console.error("❌ Failed to apply cover:", err);
+          ui.notifications.error("Cover effect failed.");
+        }
+      });      
+  });
+  
+  
+  
+  
 
 Hooks.on('ready',()=>{ /// disable autoInit
     if (gb.mainGM()){
@@ -788,6 +896,8 @@ Hooks.on('renderCombatTracker',(obj,html,data)=>{
     }
 }
 }) */
+
+
 
 
 
