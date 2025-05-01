@@ -293,11 +293,27 @@ export default class ItemDialog {
         }
 
 
-        
+            // ✅ Add skill-specific conditional modifiers here
+            let skillItem = this.actor.items.find(i => i.type === 'skill' && i.name === weaponactions.trait);
+            let condMods = (skillItem?.system?.effects || []).filter(e => e.ignore); // ✅ Only show manual ones
+
+    
+            if (condMods.length > 0) {
+            content += `<div class="swadetools-damage-actions swadetools-mod-add swadetools-mid-title"><h3>Conditional Modifiers (${weaponactions.trait})</h3></div>`;
+            condMods.forEach((mod, index) => {
+                content += `<div class="swadetools-damage-actions swadetools-mod-add">
+                <label>
+                    <input type="checkbox" class="condmod" data-mod="${mod.value}" data-label="${mod.label}" id="condmod-${index}">
+                    ${mod.label} (${mod.value >= 0 ? "+" : ""}${mod.value})
+                </label>
+                </div>`;
+            });
+            }    
 
         if ( gb.setting('selectModifiers') || gb.setting('askCalledShots')){
         content+=`<div class="swadetools-damage-actions swadetools-mod-add swadetools-mid-title"><h3>${gb.trans("ModOther",'SWADE')}</h3></div>`;
         }
+
 
 
         if (!this.actor.isWildcard && gb.setting('useGroupRolls')){
@@ -697,7 +713,10 @@ export default class ItemDialog {
             render: (html)=>{
 
                gb.modButtons(html);
-
+               html.find(".swadetools-skill-popup").on("click", (ev) => {
+                const skillName = ev.currentTarget.dataset.skill;
+            });
+                 
 
                 html.on('click','button[data-template]',button=>{
                         
@@ -714,7 +733,56 @@ export default class ItemDialog {
         
     }
 
-
+    async showMagazineDialog() {
+        const item = this.item;
+        const actor = this.actor;
+    
+        let content = `<div class="swadetools-dialog-item">
+        <h2>${item.name}</h2>
+        <p><strong>Current Shots:</strong> ${item.system.charges.value}/${item.system.charges.max}</p>`;
+    
+        // Button to reload
+        let buttons = {};
+    
+        buttons.reload = {
+            label: `<i class="fas fa-redo"></i> Reload`,
+            callback: async () => {
+                const ammoName = item.system.additionalStats?.ammo?.value;
+                if (!ammoName) {
+                    ui.notifications.warn("No Ammo stat defined for this magazine.");
+                    return;
+                }
+    
+                const ammoItem = actor.items.find(i => i.type == 'gear' && i.system.isAmmo && i.name == ammoName);
+                if (!ammoItem) {
+                    ui.notifications.warn(`No matching ammo item found: ${ammoName}`);
+                    return;
+                }
+    
+                const missingShots = item.system.charges.max - item.system.charges.value;
+                const ammoAvailable = ammoItem.system.quantity;
+    
+                if (ammoAvailable <= 0) {
+                    ui.notifications.warn(`No ammo available to reload.`);
+                    return;
+                }
+    
+                const toLoad = Math.min(missingShots, ammoAvailable);
+    
+                await item.update({ "system.charges.value": item.system.charges.value + toLoad });
+                await ammoItem.update({ "system.quantity": ammoAvailable - toLoad });
+    
+                ui.notifications.info(`Reloaded ${toLoad} rounds into magazine.`);
+            }
+        };
+    
+        new Dialog({
+            title: item.name,
+            content: content,
+            buttons: buttons
+        }).render(true);
+    }
+    
     
 
 
@@ -849,7 +917,15 @@ export default class ItemDialog {
                 charRoll.useDamageAction(html.find('#actiondmg')[0].value);
             }
 
-            
+        // Apply any selected conditional modifiers
+        html.find(".condmod:checked").each((_, el) => {
+            const mod = parseInt(el.dataset.mod);
+            const label = el.dataset.label;
+            if (!isNaN(mod)) {
+                charRoll.addModifier(mod, label);
+            }
+        });
+    
         
     }
     
@@ -887,6 +963,6 @@ function calculateRangePenaltyForDialog(item, target) {
       return null;
     }
   }
-  
+
 
   window.calculateRangePenaltyForDialog = calculateRangePenaltyForDialog;  

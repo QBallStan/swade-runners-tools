@@ -401,9 +401,12 @@ export default class CharRoll extends BasicRoll{
             } 
 
 
-            item.system.effects.map(e=>{
-                this.addModifier(e.value,e.label);
-            })
+            item.system.effects
+                .filter(e => e.ignore !== true) // ✅ Only apply always-on modifiers
+                .forEach(e => {
+                    this.addModifier(e.value, e.label);
+                });
+
         
             this.addModifier(item.system.die.modifier,gb.trans('ModSkill'));
             //mod+=item.system.die.modifier;

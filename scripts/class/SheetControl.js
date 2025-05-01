@@ -248,17 +248,30 @@ export default class SheetControl {
             let actorItem=this.sheet.actor.items.find(el=>el.id==itemId)
             let type=actorItem?.type;
 
-            if (type=='power' || type=='weapon' || (type=='gear' && (actorItem.system.isArcaneDevice===true || actorItem.system.actions.trait || !$.isEmptyObject(actorItem.system.actions.additional))) || (type=='shield' && actorItem.system.actions.trait) || type=='action'){
-
+            if (
+                type == 'power' || 
+                type == 'weapon' || 
+                (type == 'gear' && (actorItem.system.isArcaneDevice === true || actorItem.system.actions.trait || !$.isEmptyObject(actorItem.system.actions.additional))) || 
+                (type == 'shield' && actorItem.system.actions.trait) || 
+                type == 'action' ||
+                (type == 'consumable' && actorItem.system.subtype == 'magazine') // ✅ NEW: open custom dialog for magazines
+              ) {              
 
                 if(!gb.setting('itemNameClick')){
                     parentDiv.addClass('swadetools-noshow')
                 }
                 
                 target.off('click').on('click',ev=>{
-                    let item=new ItemDialog(this.sheet.actor,itemId);
-                     item.showDialog();
-                })
+                    if (type == 'consumable' && actorItem.system.subtype == 'magazine') {
+                        // 📦 Open Magazine Dialog
+                        let item = new ItemDialog(this.sheet.actor, itemId);
+                        item.showMagazineDialog();
+                    } else {
+                        let item = new ItemDialog(this.sheet.actor, itemId);
+                        item.showDialog();
+                    }
+                });
+                
 
 
                 if (type=='power' && !target.closest('li').find('.swade-tools-template-buttons').length){
