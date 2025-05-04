@@ -688,8 +688,16 @@ export default class ItemDialog {
 
                             gb.rollResist(action.skillOverride,action.traitMod);
                         
-                        } else if (action.type=='macro'){                            
-                            game.swade.itemChatCardHelper.handleAdditionalActions(this.item,this.actor,id) /// swade system handles macros
+                        } else if (action.type === 'macro') {
+                            // Safe defaults for Swade macro system to prevent crash
+                            const chatData = {
+                              flags: {
+                                "swade-tools": {
+                                  mods: []
+                                }
+                              }
+                            };
+                            game.swade.itemChatCardHelper.handleAdditionalActions(this.item, this.actor, id, chatData);
                         }else  {
                             let itemRoll=new ItemRoll(this.actor,this.item)
                             await this.processItemFormDialog(html,itemRoll,action.type);
