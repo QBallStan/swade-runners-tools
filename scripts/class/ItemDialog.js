@@ -734,6 +734,47 @@ export default class ItemDialog {
                     
                    
                 })
+
+                // Check if a template has been placed for this item
+                const template = canvas.templates.placeables.find(t =>
+                    t.document.flags["swade-tools"]?.itemId === item.id
+                );
+                
+                if (template) {
+                    const center = {
+                    x: template.document.x + (template.document.width / 2),
+                    y: template.document.y + (template.document.height / 2)
+                    };
+                
+                    const originToken = this.actor.getActiveTokens()[0];
+                    if (originToken) {
+                    const distance = canvas.grid.measureDistance(originToken.center, center);
+                
+                    // Parse range bands from item.system.range
+                    let rangeLabel = "Short", penalty = 0;
+                    if (item.system.range?.includes('/')) {
+                        const [shortStr, medStr, longStr] = item.system.range.split('/').map(s => parseInt(s));
+                        if (distance > longStr) {
+                        rangeLabel = "Too Far";
+                        penalty = -999;
+                        } else if (distance > medStr) {
+                        rangeLabel = "Long";
+                        penalty = -4;
+                        } else if (distance > shortStr) {
+                        rangeLabel = "Medium";
+                        penalty = -2;
+                        }
+                    }
+                
+                    console.log(`[Swade Tools] Template Range to target: ${Math.round(distance)}" (${rangeLabel}${penalty < 0 ? `: ${penalty}` : ""})`);
+
+                
+                    // Optional: store for use in RollControl
+                    // await this.item.setFlag("swade-tools", "templateCenter", center);
+                    }
+                }
+                
+                
                 
             }
         },{classes:['dialog swadetools-vertical']}).render(true);

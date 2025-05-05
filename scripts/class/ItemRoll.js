@@ -267,6 +267,55 @@ export default class ItemRoll extends CharRoll{
             });
           }
         }
+
+        const template = canvas.templates.placeables.find(t =>
+          t.document.flags["swade-tools"]?.itemId === this.item.id
+        );
+        
+        if (template && item?.system?.range?.includes('/')) {
+          const originToken = this.actor.getActiveTokens()[0];
+          const center = template.center; // ✅ built-in and accurate
+        
+          const dx = center.x - originToken.center.x;
+          const dy = center.y - originToken.center.y;
+          const squaresX = Math.abs(dx) / canvas.grid.size;
+          const squaresY = Math.abs(dy) / canvas.grid.size;
+          const squares = Math.max(squaresX, squaresY);
+          const distance = Math.round((squares / 2) * 2) / 2;
+        
+          const [shortStr, medStr, longStr] = item.system.range.split('/').map(s => parseInt(s));
+          let label = "Short", penalty = 0;
+        
+          if (distance > longStr) {
+            label = "Too Far";
+            penalty = -999;
+          } else if (distance > medStr) {
+            label = "Long";
+            penalty = -4;
+          } else if (distance > shortStr) {
+            label = "Medium";
+            penalty = -2;
+          }
+        
+          console.log(`[Swade Tools] Template Range to target: ${distance}" (${label}${penalty < 0 ? `: ${penalty}` : ""})`);
+        
+          if (penalty !== 0 && penalty !== -999) {
+            modifiers.push({
+              label: `Template Range Penalty (${label})`,
+              value: penalty
+            });
+          }
+        
+          this.addFlag("templateRange", {
+            distance,
+            label,
+            penalty,
+            itemId: this.item?.id,
+            actorId: this.actor?.id,
+            origin: this.item?.uuid,
+          });
+        }        
+
       
         // ✅ Perform the actual skill roll with visible modifiers
         await this.rollSkill(this.data.trait, rof, { modifiers });

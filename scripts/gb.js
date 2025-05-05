@@ -730,7 +730,10 @@ export const showTemplate=(type,item)=>{
             x: 0,
             y: 0,
             fillColor: game.user.color,
-            flags: item ? { swade: { origin: item.uuid } } : {}
+            flags: item ? {
+                swade: { origin: item.uuid },
+                "swade-tools": { itemId: item.id }
+              } : {}              
         };
        
         if (type === 'cone') {
@@ -742,7 +745,7 @@ export const showTemplate=(type,item)=>{
             templateData.width = 1
         } else {
             templateData.t = 'circle'
-            templateData.distance = type === 'small' ? 1 : (type === 'medium' ? 2 : 3)
+            templateData.distance = type === 'small' ? 2 : (type === 'medium' ? 4 : 6)
         }
         // Adjust to grid distance
 

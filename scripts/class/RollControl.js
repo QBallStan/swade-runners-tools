@@ -37,9 +37,46 @@ export default class RollControl {
 
         this.powerfail=null;
 
-        
+        this.modOverrides = {};
      
-    }  
+    }
+    
+    renderTemplateResult() {
+        const rangeData = this.chat.flags["swade-tools"].templateRange;
+        const rollTotal = this.roll.total ?? 0;
+        const modTotal = rollTotal + this.gmmod + (rangeData.penalty ?? 0);
+      
+        const isHit = modTotal >= 4;
+        const resultClass = isHit ? "hit" : "miss";
+        const iconClass = isHit ? "fas fa-bullseye" : "fas fa-times-circle";
+        const resultText = isHit ? "Hit" : "Miss";
+      
+        let html = `<div class="swadetools-targetwrap swadetools-term-${resultClass}" data-swadetools-targetid="template" data-template-result>`;
+      
+        // ✅ Match layout style exactly without making it clickable
+        html += `<div class="swadetools-rolldamage-style">`;
+        html += `<i class="${iconClass}"></i>`;
+
+        if (!isHit) {
+            html += `<a class="swadetools-scatter" data-action="scatter-template">
+              <div class="swadetools-targetname">Template: ${resultText}</div>
+            </a>`;
+          } else {
+            html += `<div class="swadetools-targetname">Template: ${resultText}</div>`;
+          }
+
+        html += `</div>`;
+      
+        html += `<a class="swadetools-situational-link" title="See Modifiers"><i class="fa fa-question-circle"></i></a>`;
+        html += `<div class="swadetools-situational-info">`;
+        html += `<ul>`;
+        if (rangeData.penalty < 0) html += `<li>${game.i18n.localize("Range")}: ${rangeData.penalty}</li>`;
+        html += `</ul></div></div>`;
+      
+        return html;
+      }
+
+      
 
     addEditButton(){
         if (game.user.isGM){
@@ -193,6 +230,110 @@ export default class RollControl {
             
 
         }
+
+        this.html.on('click', 'a.swadetools-scatter', async (event) => {
+            event.preventDefault();
+          
+            // Find the matching template
+            const template = canvas.templates.placeables.find(t =>
+              t.document.flags?.["swade-tools"]?.itemId === this.chat.flags?.["swade-tools"]?.templateRange?.itemId
+            );
+          
+            if (!template) {
+              ui.notifications.warn("No matching template found.");
+              return;
+            }
+          
+            const originX = template.document.x;
+            const originY = template.document.y;
+          
+            // 🎲 Roll 1d6 for distance (in meters)
+            const distanceRoll = new Roll("1d6");
+            await distanceRoll.evaluate();
+            await distanceRoll.toMessage({
+              flavor: "Scatter Distance (in meters)",
+              speaker: ChatMessage.getSpeaker({ actor: this.actor })
+            });
+            const distance = distanceRoll.total;
+          
+            // 🎲 Roll 1d8 for direction (8-way, 45° steps)
+            const directionRoll = new Roll("1d8");
+            await directionRoll.evaluate();
+            await directionRoll.toMessage({
+              flavor: "Scatter Direction (45° per step)",
+              speaker: ChatMessage.getSpeaker({ actor: this.actor })
+            });
+            const directionIndex = directionRoll.total - 1;
+            const angle = directionIndex * 45;
+          
+            setTimeout(async () => {
+                const gridUnit = canvas.grid.size;
+              
+                // 🔁 Double the movement distance
+                const actualDistance = distance * 2;
+              
+                // Human-friendly direction labels
+                const directionLabels = {
+                  1: "Down",
+                  2: "Down-Left",
+                  3: "Left",
+                  4: "Up-Left",
+                  5: "Up",
+                  6: "Up-Right",
+                  7: "Right",
+                  8: "Down-Right"
+                };
+              
+                let offsetX = 0;
+                let offsetY = 0;
+              
+                switch (directionRoll.total) {
+                  case 1:
+                    offsetY = actualDistance * gridUnit;
+                    break;
+                  case 2:
+                    offsetX = -(actualDistance * gridUnit) / 2;
+                    offsetY = (actualDistance * gridUnit) / 2;
+                    break;
+                  case 3:
+                    offsetX = -actualDistance * gridUnit;
+                    break;
+                  case 4:
+                    offsetX = -(actualDistance * gridUnit) / 2;
+                    offsetY = -(actualDistance * gridUnit) / 2;
+                    break;
+                  case 5:
+                    offsetY = -actualDistance * gridUnit;
+                    break;
+                  case 6:
+                    offsetX = (actualDistance * gridUnit) / 2;
+                    offsetY = -(actualDistance * gridUnit) / 2;
+                    break;
+                  case 7:
+                    offsetX = actualDistance * gridUnit;
+                    break;
+                  case 8:
+                    offsetX = (actualDistance * gridUnit) / 2;
+                    offsetY = (actualDistance * gridUnit) / 2;
+                    break;
+                }
+              
+                const newX = originX + offsetX;
+                const newY = originY + offsetY;
+              
+                await template.document.update({ x: newX, y: newY });
+              
+                // 📝 Report result with label
+                const directionName = directionLabels[directionRoll.total] ?? "Unknown";
+              
+                ChatMessage.create({
+                  content: `<strong>Template deviated:</strong><br>
+                            Distance: ${actualDistance}m<br>
+                            Direction: ${directionRoll.total} (${directionName})`,
+                  speaker: ChatMessage.getSpeaker({ actor: this.actor })
+                });
+              }, 1000);                           
+          });                           
     }
 
    
@@ -219,10 +360,17 @@ export default class RollControl {
 
     async doActions(){
 
-     //   console.log('calling do actions');
-
-        
-     
+        Hooks.once("ready", () => {
+            Hooks.on("updateChatMessage", async (msg, changes, diff, id) => {
+              if (!msg.flags?.["swade-tools"]?._refresh) return;
+          
+              const html = await msg.getHTML();
+              const rollControl = new RollControl(msg, html, game.user);
+              await rollControl.doActions();
+            });
+          });          
+          
+           //   console.log('calling do actions');
 
         if (this.chat.flags?.["swade-tools"]?.gmmod){
             this.gmmod=gb.realInt(this.chat.flags["swade-tools"].gmmod)
@@ -261,7 +409,48 @@ export default class RollControl {
 
             this.html.find('.formula-list').append('<li>'+modstr+'</li><li>'+Math.abs(this.gmmod)+'</li>') 
            
-        },500)  
+        },500)
+
+        this.html.on('click', '.swadetools-mod-toggle', async (event) => {
+            const el = $(event.currentTarget);
+            const type = el.data('type');
+            const targetId = el.data('targetid');
+          
+            const flags = foundry.utils.duplicate(this.chat.flags["swade-tools"] ?? {});
+            flags.disabledMods ??= {};
+            const current = flags.disabledMods[targetId] ?? [];
+          
+            if (current.includes(type)) {
+              flags.disabledMods[targetId] = current.filter(t => t !== type);
+            } else {
+              flags.disabledMods[targetId].push(type);
+            }
+          
+            await this.chat.update({
+              ["flags.swade-tools.disabledMods"]: flags.disabledMods,
+              ["flags.swade-tools._refresh"]: Date.now()
+            });
+          });                    
+          
+        
+        // ✅ Recalculate Template result after GM modifier applied
+        if (this.chat.flags?.["swade-tools"]?.templateRange) {
+            const rangeData = this.chat.flags["swade-tools"].templateRange;
+            const rollTotal = this.roll.total ?? 0;
+            const modTotal = rollTotal + this.gmmod + (rangeData.penalty ?? 0);
+        
+            const resultLabel = modTotal >= 4 ? "Hit" : "Miss";
+            const resultClass = modTotal >= 4 ? "swadetools-term-hit" : "swadetools-term-miss";
+        
+            const templateBlock = this.html.find('[data-template-result]');
+            if (templateBlock.length) {
+            templateBlock
+                .removeClass('swadetools-term-hit swadetools-term-miss')
+                .addClass(resultClass)
+                .find('.swadetools-targetname')
+                .html(`Template: ${resultLabel}`);
+            }
+        }
            
          //  this.html.find('.message-content').append('<div class="swadetools-gmmodtotal dice-roll"><span class="swadetools-gmmodtotalnumber dice-total">'+total+'</span></div>');
          //  console.log(this.html.html());
@@ -271,6 +460,30 @@ export default class RollControl {
 
        
         this.addButtons();
+
+        this.html.on('click', '.swadetools-mod-toggle', async (event) => {
+            const el = $(event.currentTarget);
+            const type = el.data('type');
+            const targetId = el.data('targetid');
+          
+            const flags = foundry.utils.duplicate(this.chat.flags["swade-tools"] ?? {});
+            flags.disabledMods ??= {};
+            flags.disabledMods[targetId] ??= []; // ✅ Ensure it's an array
+          
+            const current = flags.disabledMods[targetId];
+          
+            if (current.includes(type)) {
+              flags.disabledMods[targetId] = current.filter(t => t !== type);
+            } else {
+              flags.disabledMods[targetId].push(type);
+            }
+          
+            await this.chat.update({
+              ["flags.swade-tools.disabledMods"]: flags.disabledMods,
+              ["flags.swade-tools._refresh"]: Date.now()
+            });
+          });
+          
         
         
         
@@ -1053,15 +1266,23 @@ export default class RollControl {
                     i++
                 })
 
-                if (distancemod){
-                    if (toofar){
-                        raisecount=-1;  // autofail 
-                        targetInfo+=`<li>${gb.trans('TargetTooFar')}</li>`;
+                if (distancemod) {
+                    if (toofar) {
+                      raisecount = -1; // autofail
+                      targetInfo += `<li>${gb.trans('TargetTooFar')}</li>`;
                     } else {
-                        targetNumber+=distancemod;
-                        targetInfo+=`<li>${gb.trans('Range._name','SWADE')}: -${distancemod}${extreme}</li>`;
-                    }
-                }
+                        const disabled = this.chat.flags?.["swade-tools"]?.disabledMods?.[target.id] ?? [];
+                        const isDisabled = disabled.includes("range");
+                    
+                        if (!isDisabled) {
+                          targetNumber += distancemod;
+                        }
+                    
+                        targetInfo += `<li class="swadetools-mod-toggle" data-type="range" data-targetid="${target.id}" style="${isDisabled ? 'text-decoration:line-through;opacity:0.5;' : ''}">
+                          Range: -${distancemod}
+                        </li>`;
+                      }
+                    }                  
             }
 
             console.log("🛡️ Cover flag:", target.actor?.flags?.["swade-tools"]?.coverLevel);
@@ -1097,10 +1318,18 @@ export default class RollControl {
               
                 // 3. Apply highest penalty
                 if (finalPenalty < 0) {
-                  const penaltyAbs = Math.abs(finalPenalty);
-                  targetNumber += penaltyAbs;
-                  targetInfo += `<li>${sourceLabel}: -${penaltyAbs}</li>`;
-                }
+                    const penaltyAbs = Math.abs(finalPenalty);
+                    const coverDisabled = this.chat.flags?.["swade-tools"]?.disabledMods?.[target.id]?.includes("cover");
+                  
+                    if (!coverDisabled) {
+                      targetNumber += penaltyAbs;
+                    }
+                  
+                    targetInfo += `<li class="swadetools-mod-toggle" data-type="cover" data-targetid="${target.id}" style="${coverDisabled ? 'text-decoration: line-through; opacity: 0.5;' : ''}">
+                      ${sourceLabel}: -${penaltyAbs}
+                    </li>`;
+                  }
+                  
               }
               
             
@@ -2029,4 +2258,18 @@ export default class RollControl {
         return gangup;
     
     }
+
 }
+
+if (!Hooks._swadeToolsModifierHookRegistered) {
+    Hooks._swadeToolsModifierHookRegistered = true;
+  
+    Hooks.on("updateChatMessage", async (msg, changes, diff, id) => {
+      if (!msg.flags?.["swade-tools"]?._refresh) return;
+  
+      const html = await msg.getHTML(); // Rebuild HTML
+      const rollControl = new RollControl(msg, html, game.user);
+      await rollControl.doActions();
+    });
+  }
+  

@@ -510,4 +510,13 @@ li.chat-message footer.roll-interaction,
         height: 100%;
         object-fit: contain;
       }
-          
+      li.swadetools-mod-toggle {
+        cursor: pointer;
+        transition: background-color 0.2s ease, text-shadow 0.2s ease;
+      }
+      
+      li.swadetools-mod-toggle:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        text-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+      }     
