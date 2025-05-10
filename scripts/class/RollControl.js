@@ -523,8 +523,21 @@ export default class RollControl {
                   
             }
         }
+
         
             this.findTargets();
+
+            if (
+                this.rolltype === "skill" &&
+                this.chat.flags?.["swade-tools"]?.templateRange
+              )
+               {
+                this.targetShow = this.renderTemplateResult();
+                this.html.append(this.targetShow).ready(() => {
+                  this.scrollChat();
+                });
+              }
+
         } else {
 
             

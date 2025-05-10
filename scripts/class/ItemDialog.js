@@ -556,10 +556,14 @@ export default class ItemDialog {
         
               // ✅ Use Foundry-safe duplicate method
               const magData = foundry.utils.duplicate(loadedAmmo);
-              
-              magData.system.quantity = 1;
-              magData.system.equippable = false;
-        
+
+            magData.system.quantity = 1;
+            magData.system.equippable = false;
+
+            // ✅ Transfer remaining shots into ejected mag's charges
+            if (!magData.system.charges) magData.system.charges = {};
+            magData.system.charges.value = item.system.currentShots ?? magData.system.charges.max;
+
               await actor.createEmbeddedDocuments("Item", [magData]);
         
               await this.item.update({
