@@ -157,7 +157,12 @@ export default class ItemDialog {
                 return `<div><strong>Range Penalty (${rangeResult.label}):</strong> ${rangeResult.value}</div>`;
               })()}
             <div><strong>${gb.trans('RoF','SWADE')}</strong>: ${weaponinfo.rof}</div>
-            <div><strong>Ammo</strong>: ${weaponinfo.ammo || "none"}</div>`;
+            <div><strong>Ammo</strong>: ${
+            weaponinfo.reloadType === "magazine" &&
+            item.flags?.swade?.loadedAmmo?.system?.additionalStats?.ammo?.value
+                ? item.flags.swade.loadedAmmo.system.additionalStats.ammo.value
+                : (weaponinfo.ammo || "none")
+            }</div>`;
           }
             
         
@@ -268,29 +273,33 @@ export default class ItemDialog {
 
         
 
-        if ((hasDefaultDamage && damageActions.length>0) || (!hasDefaultDamage && damageActions.length>1)){
-            content+=`<div class="swadetools-damage-actions swadetools-mod-add"><label><strong>${gb.trans('Damage')}:</strong> <i class="far fa-question-circle swadetools-hint" title="${gb.trans('ActDmgHint')}"></i></label> <select id="actiondmg">`;
+        if ((hasDefaultDamage && damageActions.length > 0) || (!hasDefaultDamage && damageActions.length > 1)) {
+            content += `<div class="swadetools-damage-actions swadetools-mod-add"><label><strong>${gb.trans('Damage')}:</strong> <i class="far fa-question-circle swadetools-hint" title="${gb.trans('ActDmgHint')}"></i></label> <select id="actiondmg">`;
 
-            if (hasDefaultDamage){
-                content+=`<option value="">${gb.trans('Default')}</option>`;
+            // 🔍 Try to find ammo modifier name
+            let preferredAction = "";
+            if (item.system.reloadType === "magazine") {
+                const ammoText = item.flags?.swade?.loadedAmmo?.system?.additionalStats?.ammo?.value;
+                const match = ammoText?.match(/\(([^)]+)\)/); // extract text in parentheses
+                if (match) {
+                    const modName = match[1].trim().toLowerCase();
+                    const matchAction = damageActions.find(d => d.name?.toLowerCase() === modName);
+                    if (matchAction) preferredAction = matchAction.id;
+                }
             }
-            
 
-          //  console.log(damageActions)
-         
-            damageActions.forEach(act=>{
-                content+=`<option value="${act.id}">${act.name}</option>`;
-            })
-             
-            /* for (const i in damageActions) {
-                content+=`<option value="${act[i].id}">${act[i].name}</option>`;
-            }  */
+            if (hasDefaultDamage) {
+                content += `<option value="" ${preferredAction === "" ? "selected" : ""}>${gb.trans('Default')}</option>`;
+            }
 
-           
+            damageActions.forEach(act => {
+                const selected = act.id === preferredAction ? "selected" : "";
+                content += `<option value="${act.id}" ${selected}>${act.name}</option>`;
+            });
 
-            content+=`</select>
-            </div>`;
+            content += `</select></div>`;
         }
+
 
             // ✅ Add skill-specific conditional modifiers here
             let skillItem = this.actor.items.find(i => i.type === 'skill' && i.name === weaponactions.trait);
