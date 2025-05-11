@@ -355,6 +355,24 @@ width: calc(100% - 47px);
             grid-gap: 3px 10px;
         }
 
+        .swadetools-damage-actions.cond {
+            display: flex !important;
+        }
+
+        .dialog-content .swadetools-damage-actions.swadetools-mod-add.cond label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4em;
+        }
+
+        .dialog-content .swadetools-damage-actions.swadetools-mod-add.cond input[type="checkbox"] {
+        margin: 0;
+        align-self: center;
+        position: relative;
+        top: 0px; /* tweak if needed */
+        }
+
+
         .swadetools-damage-actions.swadetools-mid-title {
             grid-column: span 2;
             display: block;

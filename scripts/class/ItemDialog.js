@@ -292,7 +292,6 @@ export default class ItemDialog {
             </div>`;
         }
 
-
             // ✅ Add skill-specific conditional modifiers here
             let skillItem = this.actor.items.find(i => i.type === 'skill' && i.name === weaponactions.trait);
             let condMods = (skillItem?.system?.effects || []).filter(e => e.ignore); // ✅ Only show manual ones
@@ -301,13 +300,24 @@ export default class ItemDialog {
             if (condMods.length > 0) {
             content += `<div class="swadetools-damage-actions swadetools-mod-add swadetools-mid-title"><h3>Conditional Modifiers (${weaponactions.trait})</h3></div>`;
             condMods.forEach((mod, index) => {
-                content += `<div class="swadetools-damage-actions swadetools-mod-add">
+                content += `<div class="swadetools-damage-actions swadetools-mod-add cond">
                 <label>
                     <input type="checkbox" class="condmod" data-mod="${mod.value}" data-label="${mod.label}" id="condmod-${index}">
                     ${mod.label} (${mod.value >= 0 ? "+" : ""}${mod.value})
                 </label>
                 </div>`;
             });
+            // ✅ Show specialization (Savage Runners)
+            const specName = skillItem?.system?.additionalStats?.spec?.value;
+            if (specName) {
+                content += `<div class="swadetools-damage-actions swadetools-mod-add swadetools-mid-title"><h3>Specialization</h3></div>
+                <div class="swadetools-damage-actions swadetools-mod-add cond">
+                    <label>
+                        <input type="checkbox" class="skillspec" data-mod="-2" data-label="No Specialization (${specName})" id="skillspec" checked>
+                        Use Specialization — <strong>${specName}</strong>
+                    </label>
+                </div>`;
+            }
             }    
 
         if ( gb.setting('selectModifiers') || gb.setting('askCalledShots')){
@@ -702,12 +712,25 @@ export default class ItemDialog {
                               }
                             };
                             game.swade.itemChatCardHelper.handleAdditionalActions(this.item, this.actor, id, chatData);
-                        }else  {
-                            let itemRoll=new ItemRoll(this.actor,this.item)
-                            await this.processItemFormDialog(html,itemRoll,action.type);
-                            await itemRoll.rollAction(id);
-                            itemRoll.display();
+                        } else if (action.type === 'trait') {
+                        // Roll the specified skill using SWADE core dialog, not ItemRoll
+                        const skillName = action.skillOverride || this.item.system.actions.trait;
+                        const skillItem = this.actor.items.find(i => i.type === "skill" && i.name === skillName);
+                        
+                        if (skillItem) {
+                            // Call the regular SWADE skill roll
+                            skillItem.roll();
+                        } else {
+                            ui.notifications.warn(`Skill "${skillName}" not found on actor.`);
                         }
+                    } else {
+                        let itemRoll = new ItemRoll(this.actor, this.item);
+                        await this.processItemFormDialog(html, itemRoll, action.type);
+                        await itemRoll.rollAction(id);
+                        itemRoll.display();
+                    }
+
+
 
                     }
                 }
@@ -978,8 +1001,16 @@ export default class ItemDialog {
                 charRoll.addModifier(mod, label);
             }
         });
-    
-        
+
+        // ✅ Apply skill specialization penalty if unchecked
+        const specCheckbox = html.find(".skillspec")[0];
+        if (specCheckbox && !specCheckbox.checked) {
+            const mod = parseInt(specCheckbox.dataset.mod);
+            const label = specCheckbox.dataset.label;
+            if (!isNaN(mod)) {
+                charRoll.addModifier(mod, label);
+            }
+        }  
     }
     
 }
