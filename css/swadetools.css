@@ -126,6 +126,12 @@ button.swadetools-bennyrerroll {
    
 }
 
+button.swadetools-addcoverarmor {
+    position:absolute;
+    right: 47px;
+    bottom:0;
+}
+
 
 
 .swadetools-criticalfailure {
@@ -537,4 +543,14 @@ li.chat-message footer.roll-interaction,
         background-color: rgba(255, 255, 255, 0.05);
         border-radius: 4px;
         text-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
-      }     
+      }
+
+.swadetools-targetname a.swadetools-resistcheck {
+  float: right;
+  margin-left: 6px;
+  opacity: 0.8;
+}
+.swadetools-targetname a.swadetools-resistcheck:hover {
+  opacity: 1;
+}
+       

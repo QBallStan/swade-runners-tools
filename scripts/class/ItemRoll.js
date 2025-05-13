@@ -180,9 +180,7 @@ export default class ItemRoll extends CharRoll{
               if (distance > ranges[1]) rangeBand = "long";
               if (distance > ranges[2]) rangeBand = "extreme";
           
-              if (usingSlug) {
-                this.addModifier(2, "Slug Ammo Bonus");
-              } else {
+              if (!usingSlug) {
                 if (rangeBand === "short") {
                   this.addModifier(2, "Shotgun Spread (Short Range)");
                 } else if (rangeBand === "medium") {

@@ -307,27 +307,29 @@ export default class ItemDialog {
 
     
             if (condMods.length > 0) {
-            content += `<div class="swadetools-damage-actions swadetools-mod-add swadetools-mid-title"><h3>Conditional Modifiers (${weaponactions.trait})</h3></div>`;
+            content += `<div class="..."><h3>Conditional Modifiers (${weaponactions.trait})</h3></div>`;
             condMods.forEach((mod, index) => {
-                content += `<div class="swadetools-damage-actions swadetools-mod-add cond">
+                content += `<div class="...">
                 <label>
                     <input type="checkbox" class="condmod" data-mod="${mod.value}" data-label="${mod.label}" id="condmod-${index}">
                     ${mod.label} (${mod.value >= 0 ? "+" : ""}${mod.value})
                 </label>
                 </div>`;
             });
-            // ✅ Show specialization (Savage Runners)
+            }
+
+            // ✅ Always check for specialization separately
             const specName = skillItem?.system?.additionalStats?.spec?.value;
             if (specName) {
-                content += `<div class="swadetools-damage-actions swadetools-mod-add swadetools-mid-title"><h3>Specialization</h3></div>
-                <div class="swadetools-damage-actions swadetools-mod-add cond">
-                    <label>
-                        <input type="checkbox" class="skillspec" data-mod="-2" data-label="No Specialization (${specName})" id="skillspec" checked>
-                        Use Specialization — <strong>${specName}</strong>
-                    </label>
-                </div>`;
+            content += `<div class="swadetools-damage-actions swadetools-mod-add swadetools-mid-title"><h3>Specialization</h3></div>
+            <div class="swadetools-damage-actions swadetools-mod-add cond">
+                <label>
+                    <input type="checkbox" class="skillspec" data-mod="-2" data-label="No Specialization (${specName})" id="skillspec" checked>
+                    Use Specialization — <strong>${specName}</strong>
+                </label>
+            </div>`;
             }
-            }    
+                
 
         if ( gb.setting('selectModifiers') || gb.setting('askCalledShots')){
         content+=`<div class="swadetools-damage-actions swadetools-mod-add swadetools-mid-title"><h3>${gb.trans("ModOther",'SWADE')}</h3></div>`;

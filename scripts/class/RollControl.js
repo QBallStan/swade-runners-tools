@@ -333,7 +333,7 @@ export default class RollControl {
                   speaker: ChatMessage.getSpeaker({ actor: this.actor })
                 });
               }, 1000);                           
-          });                           
+          });                     
     }
 
    
@@ -458,31 +458,54 @@ export default class RollControl {
            // this.html.css('background','yellow');
         }
 
+        this.html.on('click', 'a.swadetools-resistcheck', async (event) => {
+            event.preventDefault();
+            const el = event.currentTarget;
+            const tokenId = el.dataset.swadetoolsTokenid;
+            const trait = el.dataset.swadetoolsTrait;
+            const mod = gb.realInt(el.dataset.swadetoolsMod);
+
+            const token = canvas.tokens.get(tokenId);
+            if (!token || !token.actor) {
+                return ui.notifications.warn("Target token not found.");
+            }
+
+            let finalTrait = trait;
+            const attrKey = gb.findAttr(trait); // lowercase attribute key if valid
+            const isAttr = !!attrKey;
+
+            if (isAttr) finalTrait = attrKey;
+
+            game.swade.swadetoolsRollTrait(token.actor, finalTrait, mod, isAttr);
+        });
+
+
+
        
         this.addButtons();
 
-        this.html.on('click', '.swadetools-mod-toggle', async (event) => {
-            const el = $(event.currentTarget);
-            const type = el.data('type');
-            const targetId = el.data('targetid');
-          
-            const flags = foundry.utils.duplicate(this.chat.flags["swade-tools"] ?? {});
-            flags.disabledMods ??= {};
-            flags.disabledMods[targetId] ??= []; // ✅ Ensure it's an array
-          
-            const current = flags.disabledMods[targetId];
-          
-            if (current.includes(type)) {
-              flags.disabledMods[targetId] = current.filter(t => t !== type);
-            } else {
-              flags.disabledMods[targetId].push(type);
-            }
-          
-            await this.chat.update({
-              ["flags.swade-tools.disabledMods"]: flags.disabledMods,
-              ["flags.swade-tools._refresh"]: Date.now()
+            this.html.on('click', '.swadetools-mod-toggle', async (event) => {
+                const el = $(event.currentTarget);
+                const type = el.data('type');
+                const targetId = el.data('targetid');
+            
+                const flags = foundry.utils.duplicate(this.chat.flags["swade-tools"] ?? {});
+                flags.disabledMods ??= {};
+                flags.disabledMods[targetId] ??= []; // ✅ Ensure it's an array
+            
+                const current = flags.disabledMods[targetId];
+            
+                if (current.includes(type)) {
+                flags.disabledMods[targetId] = current.filter(t => t !== type);
+                } else {
+                flags.disabledMods[targetId].push(type);
+                }
+            
+                await this.chat.update({
+                ["flags.swade-tools.disabledMods"]: flags.disabledMods,
+                ["flags.swade-tools._refresh"]: Date.now()
+                });
             });
-          });
           
         
         
@@ -492,7 +515,12 @@ export default class RollControl {
            if (this.rolltype === 'damage') {
             const item = this.getItemOwner().items.get(this.chat.flags["swade-tools"].itemroll);
             const targets = Array.from(game.user.targets);
-        
+            this.html.find('.swadetools-rollbuttonwrap').append(`
+            <button class="swadetools-addcoverarmor swadetools-rollbutton" title="Add Cover Armor">
+                <i class="fas fa-shield-alt"></i>
+            </button>
+            `);
+    
             if (targets.length > 0) {
                 const target = targets[0]; // Show toughness for the first target only
                 let totalToughness, armor;
@@ -501,25 +529,67 @@ export default class RollControl {
                     totalToughness = gb.realInt(target.actor.system.toughness.total);
                     armor = gb.realInt(target.actor.system.toughness.armor);
                 } else {
-                    totalToughness = gb.realInt(target.actor.system.stats.toughness.value);
-                    armor = gb.realInt(gb.getArmorArea(target.actor));
+                    const hitLocation = this.chat.flags?.["swade-tools"]?.usecalled ?? "torso";
+                    const bonusArmor = gb.realInt(this.chat.flags?.["swade-tools"]?.bonusArmor || 0);
+
+                    const baseArmor = gb.getArmorArea(target.actor); // default torso
+                    const calledArmor = gb.getArmorArea(target.actor, hitLocation);
+                    armor = gb.realInt(calledArmor + bonusArmor);
+
+                    totalToughness = gb.realInt(target.actor.system.stats.toughness.value) - baseArmor + armor;
                 }
-        
-                this.html.find('.flavor-text').append(`<div style="margin-top: 2px; font-size: 0.9em; color: #222;">
-                    Toughness: ${totalToughness} (Armor: ${armor})
-                </div>`);
+                
                 const item = this.getItemOwner().items.get(this.chat.flags["swade-tools"]?.itemroll);
                 const ap = this.getResolvedApValue();
 
+                let bonusArmor = 0;
+                const updateArmorDisplay = () => {
+                    const adjustedArmor = Math.max((armor + bonusArmor) - ap, 0);
+                    const finalToughness = totalToughness - armor + (armor + bonusArmor);
+                    const finalToughnessAfterAp = totalToughness - armor + adjustedArmor;
 
-                const adjustedArmor = Math.max(armor - ap, 0);
-                const finalToughness = totalToughness - armor + adjustedArmor;
+                    this.html.find('.swadetools-armor-line').html(
+                        `Toughness: ${totalToughness} (Armor: ${armor} + ${bonusArmor})`
+                    );
+                    this.html.find('.swadetools-final-ap-line').html(
+                        `Toughness - AP: ${finalToughnessAfterAp} (Armor: ${adjustedArmor})`
+                    );
+                };
 
                 this.html.find('.flavor-text').append(`
-                <div class="swadetools-final-ap-line" style="margin-top: 2px; font-size: 0.9em; color: #333;">
-                    Toughness - AP: ${finalToughness} (Armor: ${adjustedArmor})
-                </div>
+                    <div class="swadetools-armor-line" style="margin-top: 2px; font-size: 0.9em; color: #222;">
+                        Toughness: ${totalToughness} (Armor: ${armor})
+                    </div>
+                    <div class="swadetools-final-ap-line" style="margin-top: 2px; font-size: 0.9em; color: #333;">
+                        Toughness - AP: ${totalToughness - armor + Math.max(armor - ap, 0)} (Armor: ${Math.max(armor - ap, 0)})
+                    </div>
                 `);
+
+                this.html.on('click', '.swadetools-addcoverarmor', async () => {
+                    const input = await Dialog.prompt({
+                        title: "Add Cover Armor",
+                        content: `<p>Adjust Armor</p><input type="number" id="coverArmorInput" value="0" style="width:50px;">`,
+                        label: "Apply",
+                        callback: (html) => {
+                            const val = Number(html.find("#coverArmorInput").val());
+                            return isNaN(val) ? 0 : val;
+                        },
+                        rejectClose: false
+                    });
+
+                    if (input !== null) {
+                        bonusArmor += input;
+                        updateArmorDisplay();
+
+                        const currentFlags = foundry.utils.duplicate(this.chat.flags["swade-tools"] ?? {});
+                        currentFlags.bonusArmor = bonusArmor;
+
+                        await this.chat.update({
+                            ["flags.swade-tools"]: currentFlags,
+                            ["flags.swade-tools._refresh"]: Date.now()
+                        });
+                    }
+                });
                   
             }
         }
@@ -556,8 +626,7 @@ export default class RollControl {
             this.html.find('.dice-total').css('color','transparent');
         } 
        
-            await this.statusRolls();
-        
+        await this.statusRolls();
         
     }
 
@@ -1059,7 +1128,7 @@ export default class RollControl {
             this.powerfail=true;
             
             if (rof<2){
-                if (gb.raiseCount(this.roll.total,4)>=0){
+                if (gb.raiseCount(this.roll.total + this.gmmod, 4) >= 0){
                     this.powerfail=false;
                 } 
             } else {
@@ -1484,7 +1553,22 @@ export default class RollControl {
         print+=`<div class="swadetools-targetname">${target.name}: ${gb.trans('Target'+addTarget)}</div>`
         
         if (rollDmg){
-            print+=`</a>` 
+            print+=`</a>`
+
+            print += `</a>`;
+
+            // 🔰 Resist button goes here — new block AFTER target name
+            const resistEntry = Object.entries(item.system.actions.additional || {}).find(([id, action]) => action.type === 'resist');
+            if (resistEntry) {
+                const [resistId, resistAction] = resistEntry;
+                const resistTrait = resistAction.skillOverride || "Spirit";
+                const resistMod = gb.realInt(resistAction.traitMod || 0);
+                const resistName = resistAction.name || "Resist Check";
+
+                print += `<a class="swadetools-resistcheck swadetools-chat-dmg-button" data-swadetools-tokenid="${target.id}" data-swadetools-trait="${resistTrait}" data-swadetools-mod="${resistMod}" title="${resistName}">
+                    <i class="fas fa-shield-alt"></i>
+                </a>`;
+            }
         }
    // }
 
@@ -1597,13 +1681,15 @@ export default class RollControl {
             totalToughness = gb.realInt(target.actor.system.toughness.total);
             armor = gb.realInt(target.actor.system.toughness.armor);
         } else {
-            totalToughness = gb.realInt(target.actor.system.stats.toughness.value);
-            armor = gb.realInt(gb.getArmorArea(target.actor));
-        }
-       
+            const hitLocation = this.chat.flags?.["swade-tools"]?.usecalled ?? "torso";
+            const bonusArmor = gb.realInt(this.chat.flags?.["swade-tools"]?.bonusArmor || 0);
 
-        
-        
+            const baseArmor = gb.getArmorArea(target.actor); // default torso
+            const calledArmor = gb.getArmorArea(target.actor, hitLocation);
+            armor = gb.realInt(calledArmor + bonusArmor);
+
+            totalToughness = gb.realInt(target.actor.system.stats.toughness.value) - baseArmor + armor;
+        }    
 
         if (newWounds===null){
       
@@ -1630,16 +1716,13 @@ export default class RollControl {
             armor=gb.realInt(target.actor.system.toughness.armor);
             isvehicle=true;
         } else {
-            toughness=gb.realInt(target.actor.system.stats.toughness.value);
-           
-         
-           
-               armor=gb.realInt(gb.getArmorArea(target.actor,area)) 
+            const bonusArmor = gb.realInt(this.chat.flags?.["swade-tools"]?.bonusArmor || 0);
 
-               
-               toughness=toughness-gb.getArmorArea(target.actor)+armor; /// remove default armor, add location armor to final toughness
-           
-            
+            const baseArmor = gb.getArmorArea(target.actor); // default torso
+            armor = gb.realInt(gb.getArmorArea(target.actor, area)) + bonusArmor;
+
+            toughness = gb.realInt(target.actor.system.stats.toughness.value) - baseArmor + armor;
+                        
               
 
         }
