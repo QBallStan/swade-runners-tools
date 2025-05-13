@@ -93,6 +93,106 @@ async game.swadetools.run(actor) => run dialog
 
 game.swadetools.item(actor,itemId) => item dialog
 
+## **Savage Tools Fork – Custom Features**
+
+### 🎯 **Roll & Chat Card Enhancements**
+
+- **Skill Specializations**
+  
+  - Shows a checkbox in the roll dialog if `system.additionalStats.spec.value` is set.
+    
+  - Unchecking applies a –2 penalty to simulate rolling without specialization.
+    
+- **Resist Rolls in Chat**
+  
+  - Actions (e.g., spells, powers) can now include a *resist roll button*.
+    
+  - The targeted actor clicks it to roll the appropriate defense skill.
+    
+- **Conditional Modifiers in Chat**
+  
+  - Roll dialog modifiers now appear in the chat card instead.
+    
+  - Can be toggled *per target* instead of affecting all at once.
+    
+- **Cover Armor Button**
+  
+  - Appears only on **damage rolls**.
+    
+  - Adds armor bonuses based on active cover (see Cover System below).
+    
+
+---
+
+### 🛡️ **Cover System via Token HUD**
+
+- New **"Cover Options"** button on the token HUD (top-right when selecting a token).
+  
+- Opens a menu with the following icons:
+  
+  - 🛡️ No Cover
+    
+  - 🛡️ Light Cover (–2)
+    
+  - 🛡️ Medium Cover (–4)
+    
+  - 🛡️ Heavy Cover (–6)
+    
+  - 🛡️ Near Total Cover (–8)
+    
+- Sets `flags.swade-tools.coverLevel` on the token.
+  
+- Used by the roll system to adjust armor when the **Cover Armor** button is clicked.
+  
+
+---
+
+### 💥 **Combat Features**
+
+- **Called Shot Armor Penalty**
+  
+  - Automatically reduces armor on damage rolls if a called shot was made.
+- **Melee-Specific Effects**
+  
+  - Active Effects can now apply **only on melee attacks** using:
+    
+    json
+    
+- **Wound-Based Automation**
+  
+  - Status icons and effect processing now include wound condition tracking.
+    
+  - Improved display of wounded actors and relevant penalties.
+    
+
+---
+
+### 🔫 **Ammo & Magazine Handling**
+
+- **Ammo Type Display in roll window**  
+  Ammo type now reflects the **loaded magazine** (`system.additionalStats.ammo.value`).
+  
+- **Damage Mode Auto-Selection**  
+  If a weapon has multiple damage actions, it automatically selects the one matching the loaded ammo.
+  
+- **Magazine Integration**
+  
+  - 📤 **Eject Button**: Weapons using magazines have an eject button. Clicking it unequips the mag.
+    
+  - 🔄 **Reload Button**: Clicking on a magazine item opens a reload dialog.
+    
+    - Finds compatible magazines using the `ammo.value` stat.
+      
+    - Only magazines with matching ammo type will be listed.Roll dialog fetches magazine info and applies ammo type and current rounds.
+      
+
+---
+
+### ⚙️ **Miscellaneous Improvements**
+
+- **Custom Toggle Buttons**
+  
+  - Added toggle buttons to chat and roll dialogs for special rules (cover, specialization, resist, etc.).
 
 
 
